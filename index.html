@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulačka odvodů OSVČ</title>
+    <style>
+        :root {
+            --primary: #8b0000;
+            --bg-color: #f9f7f2;
+            --card-bg: #ffffff;
+            --text-main: #2d2d2d;
+            --text-muted: #6b6b6b;
+            --accent: #a12121;
+            --border: #e0d9cc;
+            --result-bg: #f4f0e6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .hint {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: normal;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            outline: none;
+            background-color: #fff;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+        }
+
+        .main-result {
+            text-align: center;
+            background-color: var(--result-bg);
+            border: 1px solid var(--border);
+        }
+
+        .main-result label {
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.8rem;
+        }
+
+        .main-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+            margin: 10px 0;
+        }
+
+        .details {
+            border-top: 1px solid var(--border);
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .row:last-child {
+            border-bottom: none;
+        }
+
+        .row span:last-child {
+            font-weight: 600;
+        }
+
+        .row.total {
+            margin-top: 8px;
+            padding-top: 15px;
+            color: var(--primary);
+            font-size: 1.05rem;
+        }
+
+        .formulas {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.5);
+            border: 1px dashed var(--border);
+        }
+
+        .formulas h2 {
+            font-size: 0.9rem;
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        @media (max-width: 480px) {
+            .main-value { font-size: 1.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Kalkulačka se vzorci</h1>
+    </header>
+
+    <div class="card">
+        <div class="input-group">
+            <label for="revenue">
+                Zadaná tržba (Kč)
+                <span class="hint">Můžete psát i vzorce (např. 20*800+500)</span>
+            </label>
+            <input type="text" id="revenue" placeholder="0" spellcheck="false">
+        </div>
+        <div class="input-group">
+            <label for="actualExpenses">
+                Skutečné výdaje (Kč)
+                <span class="hint">Např. 153+5896+2*1225</span>
+            </label>
+            <input type="text" id="actualExpenses" placeholder="0" spellcheck="false">
+        </div>
+    </div>
+
+    <div class="card main-result">
+        <label>Zůstane po odvodech a skutečných výdajích</label>
+        <span class="main-value" id="res-final-actual">0 Kč</span>
+    </div>
+
+    <div class="card details">
+        <div class="row">
+            <span>Vypočtená tržba (celkem)</span>
+            <span id="res-total-rev">0 Kč</span>
+        </div>
+        <div class="row">
+            <span>Vypočtené skutečné výdaje</span>
+            <span id="res-actual-exp">0 Kč</span>
+        </div>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">
+        <div class="row">
+            <span>Výdajový paušál (60 % z tržby)</span>
+            <span id="res-lump-exp">0 Kč</span>
+        </div>
+        <div class="row">
+            <span>Daň (6 %)</span>
+            <span id="res-tax">0 Kč</span>
+        </div>
+        <div class="row">
+            <span>Zdravotní (2,7 %)</span>
+            <span id="res-health">0 Kč</span>
+        </div>
+        <div class="row">
+            <span>Sociální (6,424 %)</span>
+            <span id="res-social">0 Kč</span>
+        </div>
+        <div class="row total">
+            <span>CELKOVÉ ORIENTAČNÍ ODVODY</span>
+            <span id="res-total-contrib">0 Kč</span>
+        </div>
+    </div>
+
+    <div class="card formulas">
+        <h2>Info k výpočtu</h2>
+        <p>Odvody se počítají fixně z tržby (paušál 60 %). Do polí tržba a výdaje můžete psát matematické příklady. Používejte hvězdičku (*) pro násobení a lomítko (/) pro dělení.</p>
+    </div>
+</div>
+
+<script>
+    const inputRevenue = document.getElementById('revenue');
+    const inputActualExpenses = document.getElementById('actualExpenses');
+
+    const formatter = new Intl.NumberFormat('cs-CZ', {
+        style: 'currency',
+        currency: 'CZK',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+    });
+
+    // Funkce pro bezpečný výpočet textového řetězce
+    function evaluateMath(str) {
+        // 1. Nahradit čárku tečkou pro matematiku
+        // 2. Odstranit vše kromě čísel a povolených operátorů +-/*().
+        const sanitized = str.replace(/,/g, '.').replace(/[^0-9+\-*/(). ]/g, '');
+        
+        if (!sanitized.trim()) return 0;
+
+        try {
+            // Vytvoření funkce z řetězce a její okamžité spuštění
+            // Je to bezpečnější než čistý eval()
+            const result = Function('"use strict"; return (' + sanitized + ')')();
+            return isFinite(result) ? result : 0;
+        } catch (e) {
+            // Pokud je vzorec neúplný nebo chybný, vrátíme 0 (nebo ignorujeme)
+            return 0;
+        }
+    }
+
+    function calculate() {
+        const revenue = evaluateMath(inputRevenue.value);
+        const actualExpenses = evaluateMath(inputActualExpenses.value);
+
+        const lumpExpenses = 0.60 * revenue;
+        const tax = 0.06 * revenue;
+        const health = 0.027 * revenue;
+        const social = 0.06424 * revenue;
+        const totalContributions = 0.15124 * revenue;
+        
+        const finalAfterActual = revenue - actualExpenses - totalContributions;
+
+        // Aktualizace UI
+        document.getElementById('res-total-rev').textContent = formatter.format(revenue);
+        document.getElementById('res-actual-exp').textContent = formatter.format(actualExpenses);
+        document.getElementById('res-final-actual').textContent = formatter.format(finalAfterActual);
+        document.getElementById('res-lump-exp').textContent = formatter.format(lumpExpenses);
+        document.getElementById('res-tax').textContent = formatter.format(tax);
+        document.getElementById('res-health').textContent = formatter.format(health);
+        document.getElementById('res-social').textContent = formatter.format(social);
+        document.getElementById('res-total-contrib').textContent = formatter.format(totalContributions);
+    }
+
+    inputRevenue.addEventListener('input', calculate);
+    inputActualExpenses.addEventListener('input', calculate);
+</script>
+
+</body>
+</html>
